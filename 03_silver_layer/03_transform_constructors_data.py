@@ -13,7 +13,18 @@
 
 # COMMAND ----------
 
+dbutils.widgets.text("p_batch_id", "")
+
+v_batch_id = dbutils.widgets.get("p_batch_id")
+print(v_batch_id)
+
+# COMMAND ----------
+
 # MAGIC %run ../00_common/01_configuration
+
+# COMMAND ----------
+
+# MAGIC %run ../00_common/03_silver_functions
 
 # COMMAND ----------
 
@@ -31,7 +42,9 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-constructors_df = spark.table(bronze_table)
+constructors_df = (
+    spark.table(bronze_table).filter((F.col("batch_id")== v_batch_id ))
+    )
 
 # COMMAND ----------
 
@@ -61,7 +74,7 @@ constructors_renamed_df = (
 
 # COMMAND ----------
 
-display(constructors_renamed_df)
+# display(constructors_renamed_df)
 
 # COMMAND ----------
 
@@ -74,7 +87,7 @@ constructors_distinct_df = constructors_renamed_df.dropDuplicates(["constructor_
 
 # COMMAND ----------
 
-display(constructors_distinct_df)
+# display(constructors_distinct_df)
 
 # COMMAND ----------
 
@@ -90,7 +103,7 @@ constructors_final_df = (
 
 # COMMAND ----------
 
-display(constructors_final_df)
+# display(constructors_final_df)
 
 # COMMAND ----------
 
@@ -99,14 +112,19 @@ display(constructors_final_df)
 
 # COMMAND ----------
 
-(
-    constructors_final_df
-        .write
-        .format("delta")
-        .mode("overwrite")
-        .saveAsTable(silver_table)
+write_to_silver(
+    input_df=constructors_final_df,
+    target_table=silver_table,
+    merge_condition="t.constructor_id = s.constructor_id",
+    columns_to_update=[
+        "constructor_name",
+        "nationality",
+        "ingestion_timestamp",
+        "source_file",
+        "batch_id"
+    ]
 )
 
 # COMMAND ----------
 
-display(spark.table(silver_table))
+# display(spark.table(silver_table))

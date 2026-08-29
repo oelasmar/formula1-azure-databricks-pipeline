@@ -17,7 +17,18 @@
 
 # COMMAND ----------
 
+dbutils.widgets.text("p_batch_id", "")
+
+v_batch_id = dbutils.widgets.get("p_batch_id")
+print(v_batch_id)
+
+# COMMAND ----------
+
 # MAGIC %run ../00_common/01_configuration
+
+# COMMAND ----------
+
+# MAGIC %run ../00_common/03_silver_functions
 
 # COMMAND ----------
 
@@ -35,7 +46,9 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-races_df = spark.table(bronze_table)
+races_df = (
+    spark.table(bronze_table).filter((F.col("batch_id")== v_batch_id ))
+    )
 
 # COMMAND ----------
 
@@ -51,7 +64,8 @@ races_selected_df = races_df.select(
     F.col("date"),
     F.col("circuitId"),
     F.col("ingestion_timestamp"),
-    F.col("source_file")
+    F.col("source_file"),
+    F.col("batch_id")
 )
 
 # COMMAND ----------
@@ -74,7 +88,7 @@ races_renamed_df = (
 
 # COMMAND ----------
 
-display(races_renamed_df)
+# display(races_renamed_df)
 
 # COMMAND ----------
 
@@ -87,7 +101,7 @@ races_distinct_df = races_renamed_df.dropDuplicates(["season","round"])
 
 # COMMAND ----------
 
-display(races_distinct_df)
+# display(races_distinct_df)
 
 # COMMAND ----------
 
@@ -103,7 +117,7 @@ races_final_df = (
 
 # COMMAND ----------
 
-display(races_final_df)
+# display(races_final_df)
 
 # COMMAND ----------
 
@@ -112,14 +126,20 @@ display(races_final_df)
 
 # COMMAND ----------
 
-(
-    races_final_df
-        .write
-        .format("delta")
-        .mode("overwrite")
-        .saveAsTable(silver_table)
+write_to_silver(
+    input_df=races_final_df,
+    target_table=silver_table,
+    merge_condition="t.season = s.season AND t.round = s.round",
+    columns_to_update=[
+        "race_name",
+        "race_date",
+        "circuit_id",
+        "ingestion_timestamp",
+        "source_file",
+        "batch_id"
+    ]
 )
 
 # COMMAND ----------
 
-display(spark.table(silver_table))
+# display(spark.table(silver_table))

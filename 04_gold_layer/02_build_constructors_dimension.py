@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # Build Constructors Dimension
 # MAGIC
@@ -15,7 +19,18 @@
 
 # COMMAND ----------
 
+dbutils.widgets.text("p_batch_id", "")
+
+v_batch_id = dbutils.widgets.get("p_batch_id")
+print(v_batch_id)
+
+# COMMAND ----------
+
 # MAGIC %run ../00_common/01_configuration
+
+# COMMAND ----------
+
+# MAGIC %run ../00_common/04_gold_functions
 
 # COMMAND ----------
 
@@ -34,7 +49,11 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-constructors_df = spark.table(f"{catalog_name}.{silver_schema}.constructors")
+constructors_df = (
+    spark.table(f"{catalog_name}.{silver_schema}.constructors")
+         .filter(F.col("batch_id") == v_batch_id)
+)
+
 ref_nationality_region_df = spark.table(f"{catalog_name}.{gold_schema}.ref_nationality_region")
 
 # COMMAND ----------
@@ -66,7 +85,7 @@ dim_constructors_df = (
 
 # COMMAND ----------
 
-display(dim_constructors_df)
+# display(dim_constructors_df)
 
 # COMMAND ----------
 
@@ -75,14 +94,17 @@ display(dim_constructors_df)
 
 # COMMAND ----------
 
-(
-    dim_constructors_df
-        .write
-        .format("delta")
-        .mode("overwrite")
-        .saveAsTable(target_table)
+write_to_gold(
+    input_df=dim_constructors_df,
+    target_table=target_table,
+    merge_condition="t.constructor_id = s.constructor_id",
+    columns_to_update=[
+        "constructor_name",
+        "nationality",
+        "nationality_region"
+    ]
 )
 
 # COMMAND ----------
 
-display(spark.table(target_table))
+# display(spark.table(target_table))

@@ -18,7 +18,18 @@
 
 # COMMAND ----------
 
+dbutils.widgets.text("p_batch_id", "")
+
+v_batch_id = dbutils.widgets.get("p_batch_id")
+print(v_batch_id)
+
+# COMMAND ----------
+
 # MAGIC %run ../00_common/01_configuration
+
+# COMMAND ----------
+
+# MAGIC %run ../00_common/04_gold_functions
 
 # COMMAND ----------
 
@@ -37,8 +48,15 @@ target_table = f"{catalog_name}.{gold_schema}.dim_races"
 
 # COMMAND ----------
 
-circuits_df = spark.table(f"{catalog_name}.{silver_schema}.circuits")
-races_df = spark.table(f"{catalog_name}.{silver_schema}.races")
+circuits_df = (
+    spark.table(f"{catalog_name}.{silver_schema}.circuits")
+         .filter(F.col("batch_id") == v_batch_id)
+)
+
+races_df = (
+    spark.table(f"{catalog_name}.{silver_schema}.races")
+         .filter(F.col("batch_id") == v_batch_id)
+)
 
 # COMMAND ----------
 
@@ -75,7 +93,7 @@ dim_races_df = (
 
 # COMMAND ----------
 
-display(dim_races_df)
+# display(dim_races_df)
 
 # COMMAND ----------
 
@@ -84,14 +102,19 @@ display(dim_races_df)
 
 # COMMAND ----------
 
-(
-    dim_races_df
-        .write
-        .format("delta")
-        .mode("overwrite")
-        .saveAsTable(target_table)
+write_to_gold(
+    input_df=dim_races_df,
+    target_table=target_table,
+    merge_condition="t.season = s.season AND t.round = s.round",
+    columns_to_update=[
+        "race_name",
+        "race_date",
+        "circuit_name",
+        "locality",
+        "country"
+    ]
 )
 
 # COMMAND ----------
 
-display(spark.table(target_table))
+# display(spark.table(target_table))

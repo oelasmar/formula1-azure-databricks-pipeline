@@ -12,7 +12,18 @@
 
 # COMMAND ----------
 
+dbutils.widgets.text("p_batch_id", "")
+
+v_batch_id = dbutils.widgets.get("p_batch_id")
+print(v_batch_id)
+
+# COMMAND ----------
+
 # MAGIC %run ../00_common/01_configuration
+
+# COMMAND ----------
+
+# MAGIC %run ../00_common/03_silver_functions
 
 # COMMAND ----------
 
@@ -32,6 +43,7 @@ from pyspark.sql import functions as F
 
 results_df = (
   spark.table(bronze_table)
+       .filter((F.col("batch_id") == v_batch_id))
        .select("season",
                 "round",
                 "constructorId",
@@ -46,7 +58,8 @@ results_df = (
                 "positionText",
                 "status",
                 "ingestion_timestamp",
-                "source_file")
+                "source_file",
+                "batch_id")
        .withColumnsRenamed({
             "constructorId": "constructor_id",
             "driverId": "driver_id",
@@ -82,7 +95,7 @@ results_valid_df = (
 
 # COMMAND ----------
 
-display(results_df.count() - results_valid_df.count())
+# display(results_df.count() - results_valid_df.count())
 
 # COMMAND ----------
 
@@ -103,14 +116,26 @@ results_final_df = (
 
 # COMMAND ----------
 
-(
-    results_final_df
-        .write
-        .format("delta")
-        .mode("overwrite")
-        .saveAsTable(silver_table)
+write_to_silver(
+    input_df=results_final_df,
+    target_table=silver_table,
+    merge_condition="t.season = s.season AND t.round = s.round AND t.constructor_id = s.constructor_id AND t.driver_id = s.driver_id",
+    columns_to_update=[
+        "race_name",
+        "race_date",
+        "grid_position",
+        "completed_laps",
+        "car_number",
+        "points",
+        "final_position",
+        "final_position_text",
+        "status",
+        "ingestion_timestamp",
+        "source_file",
+        "batch_id"
+    ]
 )
 
 # COMMAND ----------
 
-display(spark.table(silver_table))
+# display(spark.table(silver_table))

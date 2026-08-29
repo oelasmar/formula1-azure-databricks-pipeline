@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # Build Drivers Dimension
 # MAGIC
@@ -16,7 +20,18 @@
 
 # COMMAND ----------
 
+dbutils.widgets.text("p_batch_id", "")
+
+v_batch_id = dbutils.widgets.get("p_batch_id")
+print(v_batch_id)
+
+# COMMAND ----------
+
 # MAGIC %run ../00_common/01_configuration
+
+# COMMAND ----------
+
+# MAGIC %run ../00_common/04_gold_functions
 
 # COMMAND ----------
 
@@ -35,7 +50,11 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-drivers_df               = spark.table(f"{catalog_name}.{silver_schema}.drivers")
+drivers_df = (
+    spark.table(f"{catalog_name}.{silver_schema}.drivers")
+         .filter(F.col("batch_id") == v_batch_id)
+)
+
 ref_nationality_region_df = spark.table(f"{catalog_name}.{gold_schema}.ref_nationality_region")
 
 # COMMAND ----------
@@ -69,7 +88,7 @@ dim_drivers_df = (
 
 # COMMAND ----------
 
-display(dim_drivers_df)
+# display(dim_drivers_df)
 
 # COMMAND ----------
 
@@ -78,14 +97,18 @@ display(dim_drivers_df)
 
 # COMMAND ----------
 
-(
-    dim_drivers_df
-        .write
-        .format("delta")
-        .mode("overwrite")             
-        .saveAsTable(target_table)
+write_to_gold(
+    input_df=dim_drivers_df,
+    target_table=target_table,
+    merge_condition="t.driver_id = s.driver_id",
+    columns_to_update=[
+        "driver_name",
+        "date_of_birth",
+        "nationality",
+        "nationality_region"
+    ]
 )
 
 # COMMAND ----------
 
-display(spark.table(target_table))
+# display(spark.table(target_table))
