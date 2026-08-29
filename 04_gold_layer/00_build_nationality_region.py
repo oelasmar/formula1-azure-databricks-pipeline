@@ -90,7 +90,6 @@ nationality_region_map_rows = [
 ref_nationality_region_df = spark.createDataFrame(nationality_region_map_rows)
 
 
-
 # COMMAND ----------
 
 # MAGIC %md
