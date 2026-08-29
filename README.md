@@ -192,9 +192,12 @@ Este proyecto ha sido construido con un enfoque puramente práctico para consoli
 ## Características principales
 - **Aplanado de JSONs Complejos**: Descomposición dinámica de estructuras anidadas.
 <br>
+
 - **Uso de Cargas Incrementales (MERGE)**: Actualización eficiente de registros modificados o nuevos sin reescribir tablas completas.
 <br>
+
 - **Gestión de Secretos**: Uso de Azure Key Vault y Databricks Secret Scopes para almacenamiento seguro de credenciales.
 <br>
+
 - **Calidad de Datos**: Validación de esquemas y tipos de datos en la capa Silver previo al cálculo de agregaciones en Gold.
 
