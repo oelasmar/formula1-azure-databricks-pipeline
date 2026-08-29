@@ -1,0 +1,65 @@
+# ==========================================
+# Entornos Virtuales y Dependencias de Python
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
+.uv/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==========================================
+# Archivos Temporales y Caché de Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ==========================================
+# Secretos y Credenciales de Entorno
+# ==========================================
+.env
+.env.local
+*.pem
+*.key
+*.secret
+
+# ==========================================
+# Databricks, Spark y Delta Lake (Locales)
+# ==========================================
+.databricks/
+databricks.yml.local
+metastore_db/
+derby.log
+*.sparkStaging/
+checkpoint/
+spark-warehouse/
+
+# ==========================================
+# dbt (Data Build Tool)
+# ==========================================
+dbt_packages/
+target/
+logs/
+profiles.yml
+
+# ==========================================
+# Configuración de IDEs y Editores
+# ==========================================
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
